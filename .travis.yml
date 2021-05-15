@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t tomerfisher/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true tomerfisher/react-test npm test
+
+after_success:
+  - docker build -t tomerfisher/multi-client ./client
+  - docker build -t tomerfisher/multi-nginx ./nginx
+  - docker build -t tomerfisher/multi-server ./server
+  - docker build -t tomerfisher/multi-worker ./worker
+  # Login to the docker CLI
+  - docker login -u "$DOCKER_ID" -p "$DOCKER_PASSWORD"
+  # Take those images and push them to docker hub
+  - docker push tomerfisher/multi-client
+  - docker push tomerfisher/multi-nginx
+  - docker push tomerfisher/multi-server
+  - docker push tomerfisher/multi-worker
